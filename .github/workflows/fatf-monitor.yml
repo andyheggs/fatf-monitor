@@ -69,7 +69,7 @@ jobs:
           curl_exit=0
           http_status=$(curl --silent --show-error \
             --write-out "%{http_code}" \
-            http://127.0.0.1:5088/api/compliance/fatf/latest \
+            http://127.0.0.1:5088/api/compliance/fatf/jurisdictions \
             --output fatf-result.json || curl_exit=$?)
 
           python - "$http_status" "$curl_exit" <<'PY'
@@ -103,9 +103,10 @@ jobs:
               result = None
 
           if isinstance(result, dict) and http_status == "200":
-              jurisdictions = result.get("jurisdictions", [])
-              increased = [j for j in jurisdictions if j.get("category") in (0, "IncreasedMonitoring")]
-              call_for_action = [j for j in jurisdictions if j.get("category") in (1, "CallForAction")]
+              increased_list = result.get("increasedMonitoring") or {}
+              call_for_action_list = result.get("callForAction") or {}
+              increased = increased_list.get("jurisdictions") or []
+              call_for_action = call_for_action_list.get("jurisdictions") or []
               review = result.get("llmReview") or {}
               summary.extend([
                   "",
@@ -113,7 +114,7 @@ jobs:
                   "",
                   f"- Increased monitoring jurisdictions: {len(increased)}",
                   f"- Call for action jurisdictions: {len(call_for_action)}",
-                  f"- Total jurisdictions: {len(jurisdictions)}",
+                  f"- Total jurisdictions: {result.get('totalJurisdictions')}",
                   f"- LLM review enabled: {review.get('enabled')}",
                   f"- LLM model: {review.get('model')}",
               ])
