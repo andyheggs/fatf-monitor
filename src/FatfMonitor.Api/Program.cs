@@ -9,6 +9,7 @@ builder.Services.Configure<FatfMonitorOptions>(builder.Configuration.GetSection(
 builder.Services.AddSingleton<FatfJurisdictionParser>();
 builder.Services.AddSingleton<IFatfSnapshotStore, FileFatfSnapshotStore>();
 builder.Services.AddHttpClient<IFatfLlmVerifier, OpenAiFatfLlmVerifier>();
+builder.Services.AddHttpClient<IFatfWebSearchProvider, OpenAiFatfWebSearchProvider>();
 builder.Services.AddHttpClient<FatfMonitorService>(client =>
 {
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; FatfMonitor/1.0; +https://github.com/andyheggs/fatf-monitor)");

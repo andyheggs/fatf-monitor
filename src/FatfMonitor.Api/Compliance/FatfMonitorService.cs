@@ -6,11 +6,18 @@ public sealed class FatfMonitorService(
     HttpClient httpClient,
     FatfJurisdictionParser parser,
     IFatfLlmVerifier llmVerifier,
+    IFatfWebSearchProvider webSearchProvider,
     IFatfSnapshotStore snapshotStore,
     IOptions<FatfMonitorOptions> options)
 {
     public async Task<FatfSnapshot> FetchCurrentAsync(CancellationToken cancellationToken = default)
     {
+        var webSearchSnapshot = await webSearchProvider.TryFetchLatestAsync(cancellationToken);
+        if (webSearchSnapshot is not null)
+        {
+            return webSearchSnapshot;
+        }
+
         var sources = await ResolveSourcesAsync(cancellationToken);
         var jurisdictions = new List<FatfJurisdiction>();
         var excerpts = new Dictionary<FatfListCategory, string>();

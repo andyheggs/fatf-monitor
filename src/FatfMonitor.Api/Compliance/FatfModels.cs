@@ -64,5 +64,6 @@ public sealed class LlmOptions
 {
     public string Provider { get; set; } = "OpenAI";
     public string Model { get; set; } = "gpt-4.1-mini";
+    public string SearchModel { get; set; } = "gpt-4.1-mini";
     public string? ApiKey { get; set; }
 }
