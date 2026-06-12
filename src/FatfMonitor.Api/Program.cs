@@ -1,10 +1,16 @@
 using FatfMonitor.Api.Compliance;
+using Microsoft.AspNetCore.Http.Json;
+using System.Text.Encodings.Web;
 
 LoadLocalDotEnv();
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.Configure<JsonOptions>(options =>
+{
+    options.SerializerOptions.Encoder = JavaScriptEncoder.Default;
+});
 builder.Services.Configure<FatfMonitorOptions>(builder.Configuration.GetSection("FatfMonitor"));
 builder.Services.AddSingleton<FatfJurisdictionParser>();
 builder.Services.AddSingleton<IFatfSnapshotStore, FileFatfSnapshotStore>();
