@@ -21,7 +21,7 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Test API
-        run: dotnet test FatfMonitor.sln --configuration Release
+        run: dotnet test FatfMonitor.slnx --configuration Release
 
       - name: Run FATF check from GitHub runner
         env:
