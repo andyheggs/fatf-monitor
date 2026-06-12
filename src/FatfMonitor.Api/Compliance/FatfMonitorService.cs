@@ -102,7 +102,13 @@ public sealed class FatfMonitorService(
         }
 
         using var response = await httpClient.SendAsync(request, cancellationToken);
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new FatfMonitorUnavailableException(
+                $"Unable to retrieve FATF source {url}. FATF returned {(int)response.StatusCode} ({response.ReasonPhrase}). Configure OPENAI_API_KEY so the monitor can use OpenAI hosted web search, or provide an accessible cached source.",
+                url);
+        }
+
         return await response.Content.ReadAsStringAsync(cancellationToken);
     }
 

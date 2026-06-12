@@ -42,12 +42,28 @@ app.MapGet("/api/session", () => new
 });
 
 app.MapGet("/api/compliance/fatf/latest", async (FatfMonitorService monitor, CancellationToken cancellationToken) =>
-    Results.Ok(await monitor.FetchCurrentAsync(cancellationToken)));
+{
+    try
+    {
+        return Results.Ok(await monitor.FetchCurrentAsync(cancellationToken));
+    }
+    catch (FatfMonitorUnavailableException exception)
+    {
+        return ToUnavailableProblem(exception);
+    }
+});
 
 app.MapGet("/api/compliance/fatf/jurisdictions", async (FatfMonitorService monitor, CancellationToken cancellationToken) =>
 {
-    var snapshot = await monitor.FetchCurrentAsync(cancellationToken);
-    return Results.Ok(FatfJurisdictionListResponse.FromSnapshot(snapshot));
+    try
+    {
+        var snapshot = await monitor.FetchCurrentAsync(cancellationToken);
+        return Results.Ok(FatfJurisdictionListResponse.FromSnapshot(snapshot));
+    }
+    catch (FatfMonitorUnavailableException exception)
+    {
+        return ToUnavailableProblem(exception);
+    }
 });
 
 app.MapPost("/api/compliance/fatf/check", async (
@@ -66,10 +82,30 @@ app.MapPost("/api/compliance/fatf/check", async (
         }
     }
 
-    return Results.Ok(await monitor.CheckAndPersistAsync(cancellationToken));
+    try
+    {
+        return Results.Ok(await monitor.CheckAndPersistAsync(cancellationToken));
+    }
+    catch (FatfMonitorUnavailableException exception)
+    {
+        return ToUnavailableProblem(exception);
+    }
 });
 
 app.Run();
+
+static IResult ToUnavailableProblem(FatfMonitorUnavailableException exception)
+{
+    return Results.Problem(
+        title: "FATF monitor source unavailable",
+        detail: exception.Message,
+        statusCode: StatusCodes.Status503ServiceUnavailable,
+        extensions: new Dictionary<string, object?>
+        {
+            ["sourceUrl"] = exception.SourceUrl.ToString(),
+            ["remediation"] = "Set OPENAI_API_KEY or Llm__ApiKey so the monitor can use OpenAI hosted web search. Direct FATF HTTP access is commonly blocked with 403."
+        });
+}
 
 static void LoadLocalDotEnv()
 {

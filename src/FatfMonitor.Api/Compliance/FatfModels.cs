@@ -91,6 +91,17 @@ public sealed record FatfLlmReview(
     string Summary,
     decimal? Confidence);
 
+public sealed class FatfMonitorUnavailableException : Exception
+{
+    public FatfMonitorUnavailableException(string message, Uri sourceUrl, Exception? innerException = null)
+        : base(message, innerException)
+    {
+        SourceUrl = sourceUrl;
+    }
+
+    public Uri SourceUrl { get; }
+}
+
 public sealed class FatfMonitorOptions
 {
     public string HomePageUrl { get; set; } = "https://www.fatf-gafi.org/";

@@ -20,6 +20,8 @@ dotnet test FatfMonitor.slnx
 dotnet run --project src\FatfMonitor.Api\FatfMonitor.Api.csproj
 ```
 
+The OpenAI key is required when running the API from a machine or network that receives `403 Forbidden` from `fatf-gafi.org`. Without it, the API will attempt the direct FATF fallback and return a `503` problem response if FATF blocks the request.
+
 Endpoints:
 
 - `GET /api/compliance/fatf/latest`
