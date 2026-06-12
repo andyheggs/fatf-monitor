@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FatfMonitor.Api/FatfMonitor.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FatfMonitor.Api.Tests/FatfMonitor.Api.Tests.csproj" />
+  </Folder>
+</Solution>

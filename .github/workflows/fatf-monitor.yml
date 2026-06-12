@@ -1,0 +1,157 @@
+name: FATF monitor
+
+on:
+  schedule:
+    - cron: "15 7 * * *"
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  test-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Test API
+        run: dotnet test FatfMonitor.sln --configuration Release
+
+      - name: Run FATF check from GitHub runner
+        env:
+          ASPNETCORE_URLS: http://127.0.0.1:5088
+          ASPNETCORE_ENVIRONMENT: Production
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          increased_url="https://www.fatf-gafi.org/en/publications/High-risk-and-other-monitored-jurisdictions/increased-monitoring-february-2026.html"
+          call_for_action_url="https://www.fatf-gafi.org/en/publications/High-risk-and-other-monitored-jurisdictions/Call-for-action-february-2026.html"
+
+          : > fatf-source-preflight.txt
+          for source_url in "$increased_url" "$call_for_action_url"; do
+            status=$(curl --silent --show-error \
+              --location \
+              --user-agent "FatfMonitor/1.0 (+https://github.com/andyheggs/fatf-monitor)" \
+              --write-out "%{http_code}" \
+              --output /dev/null \
+              "$source_url" || true)
+            echo "$status $source_url" >> fatf-source-preflight.txt
+          done
+
+          dotnet run \
+            --project src/FatfMonitor.Api/FatfMonitor.Api.csproj \
+            --configuration Release \
+            --no-restore > api.log 2>&1 &
+
+          api_pid=$!
+          trap 'kill "$api_pid" 2>/dev/null || true' EXIT
+
+          for attempt in {1..45}; do
+            if curl --silent --fail http://127.0.0.1:5088/api/session >/dev/null; then
+              break
+            fi
+
+            if [ "$attempt" -eq 45 ]; then
+              echo "API did not become ready."
+              tail -100 api.log
+              exit 1
+            fi
+
+            sleep 1
+          done
+
+          curl_exit=0
+          http_status=$(curl --silent --show-error \
+            --write-out "%{http_code}" \
+            http://127.0.0.1:5088/api/compliance/fatf/latest \
+            --output fatf-result.json || curl_exit=$?)
+
+          python - "$http_status" "$curl_exit" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          http_status = sys.argv[1]
+          curl_exit = sys.argv[2]
+          result_path = Path("fatf-result.json")
+          result_text = result_path.read_text(encoding="utf-8", errors="replace") if result_path.exists() else ""
+          preflight = Path("fatf-source-preflight.txt").read_text(encoding="utf-8", errors="replace")
+          api_log = Path("api.log").read_text(encoding="utf-8", errors="replace") if Path("api.log").exists() else ""
+
+          summary = [
+              "## FATF monitor result",
+              "",
+              f"- API HTTP status: {http_status}",
+              f"- Curl exit code: {curl_exit}",
+              "",
+              "### FATF source preflight",
+              "",
+              "```text",
+              preflight.strip(),
+              "```",
+          ]
+
+          try:
+              result = json.loads(result_text)
+          except json.JSONDecodeError:
+              result = None
+
+          if isinstance(result, dict) and http_status == "200":
+              jurisdictions = result.get("jurisdictions", [])
+              increased = [j for j in jurisdictions if j.get("category") in (0, "IncreasedMonitoring")]
+              call_for_action = [j for j in jurisdictions if j.get("category") in (1, "CallForAction")]
+              review = result.get("llmReview") or {}
+              summary.extend([
+                  "",
+                  "### Extracted lists",
+                  "",
+                  f"- Increased monitoring jurisdictions: {len(increased)}",
+                  f"- Call for action jurisdictions: {len(call_for_action)}",
+                  f"- Total jurisdictions: {len(jurisdictions)}",
+                  f"- LLM review enabled: {review.get('enabled')}",
+                  f"- LLM model: {review.get('model')}",
+              ])
+          else:
+              summary.extend([
+                  "",
+                  "### Response body",
+                  "",
+                  "```text",
+                  result_text[-4000:],
+                  "```",
+                  "",
+                  "### API log tail",
+                  "",
+                  "```text",
+                  api_log[-4000:],
+                  "```",
+              ])
+
+          Path("fatf-summary.md").write_text("\n".join(summary), encoding="utf-8")
+          print("\n".join(summary))
+          PY
+
+          cat fatf-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$curl_exit" != "0" ] || [ "$http_status" -lt 200 ] || [ "$http_status" -ge 300 ]; then
+            exit 1
+          fi
+
+      - name: Upload FATF result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fatf-monitor-result
+          path: |
+            fatf-result.json
+            fatf-summary.md
+            fatf-source-preflight.txt
+            api.log
+          if-no-files-found: ignore
