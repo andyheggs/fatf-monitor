@@ -60,4 +60,12 @@ Endpoints:
 
 ## GitHub Actions
 
-Add `OPENAI_API_KEY` as a repository secret. The workflow runs tests, starts the API on a GitHub-hosted runner, retrieves the latest FATF lists through OpenAI hosted web search, and uploads the JSON result as an artifact.
+Add `OPENAI_API_KEY` as a repository secret. The workflow runs tests, starts the API on a GitHub-hosted runner, retrieves the latest FATF lists through OpenAI hosted web search, uploads the JSON result as an artifact, and publishes the latest JSON to GitHub Pages.
+
+After GitHub Pages is enabled for this repository, external apps can read the latest published result from:
+
+```text
+https://andyheggs.github.io/fatf-monitor/latest.json
+```
+
+The Pages output is static JSON. Calling it does not call OpenAI and does not use additional OpenAI credits. Credits are only used when the scheduled or manually triggered GitHub Actions workflow refreshes the result.

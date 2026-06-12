@@ -5,6 +5,11 @@ on:
     - cron: "15 7 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -144,6 +149,64 @@ jobs:
             exit 1
           fi
 
+      - name: Build GitHub Pages output
+        run: |
+          set -euo pipefail
+
+          mkdir -p pages
+          cp fatf-result.json pages/fatf-result.json
+          cp fatf-summary.md pages/fatf-summary.md
+
+          python <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          result = json.loads(Path("fatf-result.json").read_text(encoding="utf-8"))
+          generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          checked_at = result.get("checkedAt", generated_at)
+          dated_name = f"fatf-result-{generated_at[:10]}.json"
+
+          Path("pages/latest.json").write_text(
+              json.dumps(result, ensure_ascii=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          Path("pages", dated_name).write_text(
+              json.dumps(result, ensure_ascii=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+
+          increased = result.get("increasedMonitoring") or {}
+          call_for_action = result.get("callForAction") or {}
+          html = f"""<!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>FATF Monitor</title>
+            <style>
+              body {{ font-family: Arial, sans-serif; max-width: 920px; margin: 40px auto; padding: 0 20px; line-height: 1.5; }}
+              code {{ background: #f2f4f7; padding: 2px 5px; border-radius: 4px; }}
+              a {{ color: #0645ad; }}
+            </style>
+          </head>
+          <body>
+            <h1>FATF Monitor</h1>
+            <p>Latest generated result from the FATF monitor workflow.</p>
+            <ul>
+              <li>Checked at: <code>{checked_at}</code></li>
+              <li>Total jurisdictions: <code>{result.get("totalJurisdictions")}</code></li>
+              <li>Increased monitoring: <code>{increased.get("count")}</code></li>
+              <li>Call for action: <code>{call_for_action.get("count")}</code></li>
+            </ul>
+            <p><a href="latest.json">latest.json</a> is the stable endpoint for external apps.</p>
+            <p><a href="fatf-result.json">fatf-result.json</a> and <a href="{dated_name}">{dated_name}</a> are also available.</p>
+          </body>
+          </html>
+          """
+          Path("pages/index.html").write_text(html, encoding="utf-8")
+          PY
+
       - name: Upload FATF result
         if: always()
         uses: actions/upload-artifact@v4
@@ -155,3 +218,17 @@ jobs:
             fatf-source-preflight.txt
             api.log
           if-no-files-found: ignore
+
+      - name: Setup GitHub Pages
+        if: success()
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        if: success()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages
+
+      - name: Deploy to GitHub Pages
+        if: success()
+        uses: actions/deploy-pages@v4

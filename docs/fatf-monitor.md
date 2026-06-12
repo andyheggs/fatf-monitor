@@ -43,3 +43,11 @@ Use the included GitHub Actions workflow to run tests and perform the FATF check
 - `OPENAI_API_KEY`: OpenAI key used for hosted web-search retrieval.
 
 The workflow can also be run manually from the Actions tab. Each run uploads a `fatf-monitor-result` artifact containing the monitor JSON result, a short Markdown summary, source preflight diagnostics, and the API log.
+
+The workflow also publishes static JSON to GitHub Pages:
+
+```text
+https://andyheggs.github.io/fatf-monitor/latest.json
+```
+
+External apps should use this GitHub Pages URL when they only need the latest FATF result. It is static JSON, so client calls do not trigger OpenAI usage. OpenAI credits are only used when GitHub Actions refreshes the result.
