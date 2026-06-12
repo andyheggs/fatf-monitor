@@ -10,7 +10,15 @@ The primary retrieval path uses OpenAI hosted web search. The model searches for
 ## API endpoints
 
 - `GET /api/compliance/fatf/latest` fetches the current FATF lists without saving them.
+- `GET /api/compliance/fatf/jurisdictions` fetches the current FATF lists and returns them grouped for external API consumers.
 - `POST /api/compliance/fatf/check` fetches the current FATF lists, compares them with the stored snapshot, saves the new snapshot, and returns added/removed jurisdictions.
+
+External apps should prefer `GET /api/compliance/fatf/jurisdictions`. It returns:
+
+- `increasedMonitoring.jurisdictions`: the exact jurisdictions extracted from the latest FATF "Jurisdictions under Increased Monitoring" publication.
+- `callForAction.jurisdictions`: the exact jurisdictions extracted from the latest FATF "High-Risk Jurisdictions subject to a Call for Action" publication.
+- `sourceUrl` and `count` for each list.
+- `totalJurisdictions` across both lists.
 
 ## Configuration
 

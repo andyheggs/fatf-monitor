@@ -38,6 +38,12 @@ app.MapGet("/api/session", () => new
 app.MapGet("/api/compliance/fatf/latest", async (FatfMonitorService monitor, CancellationToken cancellationToken) =>
     Results.Ok(await monitor.FetchCurrentAsync(cancellationToken)));
 
+app.MapGet("/api/compliance/fatf/jurisdictions", async (FatfMonitorService monitor, CancellationToken cancellationToken) =>
+{
+    var snapshot = await monitor.FetchCurrentAsync(cancellationToken);
+    return Results.Ok(FatfJurisdictionListResponse.FromSnapshot(snapshot));
+});
+
 app.MapPost("/api/compliance/fatf/check", async (
     HttpRequest request,
     IConfiguration configuration,

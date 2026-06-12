@@ -23,7 +23,38 @@ dotnet run --project src\FatfMonitor.Api\FatfMonitor.Api.csproj
 Endpoints:
 
 - `GET /api/compliance/fatf/latest`
+- `GET /api/compliance/fatf/jurisdictions`
 - `POST /api/compliance/fatf/check`
+
+`GET /api/compliance/fatf/jurisdictions` returns a stable JSON shape for external apps:
+
+```json
+{
+  "checkedAt": "2026-06-12T13:36:09Z",
+  "increasedMonitoring": {
+    "category": "IncreasedMonitoring",
+    "name": "Jurisdictions under Increased Monitoring",
+    "sourceUrl": "https://www.fatf-gafi.org/...",
+    "jurisdictions": ["Algeria", "Angola"],
+    "count": 2
+  },
+  "callForAction": {
+    "category": "CallForAction",
+    "name": "High-Risk Jurisdictions subject to a Call for Action",
+    "sourceUrl": "https://www.fatf-gafi.org/...",
+    "jurisdictions": ["Democratic Republic of Korea", "Iran", "Myanmar"],
+    "count": 3
+  },
+  "llmReview": {
+    "enabled": true,
+    "provider": "OpenAI",
+    "model": "gpt-4.1-mini",
+    "summary": "Retrieved latest FATF jurisdiction lists using OpenAI hosted web search.",
+    "confidence": null
+  },
+  "totalJurisdictions": 5
+}
+```
 
 ## GitHub Actions
 
