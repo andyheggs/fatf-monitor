@@ -11,13 +11,13 @@ public sealed class FatfMonitorService(
 {
     public async Task<FatfSnapshot> FetchCurrentAsync(CancellationToken cancellationToken = default)
     {
-        var sources = GetSources();
+        var sources = await ResolveSourcesAsync(cancellationToken);
         var jurisdictions = new List<FatfJurisdiction>();
         var excerpts = new Dictionary<FatfListCategory, string>();
 
         foreach (var source in sources)
         {
-            var html = await httpClient.GetStringAsync(source.Url, cancellationToken);
+            var html = await FetchHtmlAsync(source.Url, new Uri(options.Value.HomePageUrl), cancellationToken);
             excerpts[source.Category] = parser.ExtractReviewExcerpt(html);
             jurisdictions.AddRange(parser
                 .ParseJurisdictionNames(html)
@@ -45,20 +45,58 @@ public sealed class FatfMonitorService(
         return new FatfMonitorResult(current, previous, changes);
     }
 
-    private IReadOnlyCollection<FatfSource> GetSources()
+    private async Task<IReadOnlyCollection<FatfSource>> ResolveSourcesAsync(CancellationToken cancellationToken)
     {
         var monitorOptions = options.Value;
-        return
-        [
-            new(
-                FatfListCategory.IncreasedMonitoring,
-                "Jurisdictions under Increased Monitoring",
-                new Uri(monitorOptions.IncreasedMonitoringUrl)),
-            new(
-                FatfListCategory.CallForAction,
-                "High-Risk Jurisdictions subject to a Call for Action",
-                new Uri(monitorOptions.CallForActionUrl))
-        ];
+        var homePageUri = new Uri(monitorOptions.HomePageUrl);
+        var homePageHtml = await FetchHtmlAsync(homePageUri, null, cancellationToken);
+        var discoveredLinks = parser.ExtractPublicationLinks(homePageHtml, homePageUri);
+
+        var increasedMonitoring = PickDiscoveredSource(
+            discoveredLinks,
+            FatfListCategory.IncreasedMonitoring,
+            monitorOptions.IncreasedMonitoringUrl,
+            "Jurisdictions under Increased Monitoring");
+        var callForAction = PickDiscoveredSource(
+            discoveredLinks,
+            FatfListCategory.CallForAction,
+            monitorOptions.CallForActionUrl,
+            "High-Risk Jurisdictions subject to a Call for Action");
+
+        return [increasedMonitoring, callForAction];
+    }
+
+    private static FatfSource PickDiscoveredSource(
+        IReadOnlyCollection<FatfPublicationLink> discoveredLinks,
+        FatfListCategory category,
+        string? fallbackUrl,
+        string fallbackName)
+    {
+        var discovered = discoveredLinks.FirstOrDefault(link => link.Category == category);
+        if (discovered is not null)
+        {
+            return new FatfSource(category, discovered.Title, discovered.Url);
+        }
+
+        if (!string.IsNullOrWhiteSpace(fallbackUrl))
+        {
+            return new FatfSource(category, fallbackName, new Uri(fallbackUrl));
+        }
+
+        throw new InvalidOperationException($"Could not discover FATF source link for {fallbackName} from the FATF homepage.");
+    }
+
+    private async Task<string> FetchHtmlAsync(Uri url, Uri? referer, CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        if (referer is not null)
+        {
+            request.Headers.Referrer = referer;
+        }
+
+        using var response = await httpClient.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync(cancellationToken);
     }
 
     private static FatfChangeSet Compare(FatfSnapshot previous, FatfSnapshot current)

@@ -11,8 +11,13 @@ builder.Services.AddSingleton<IFatfSnapshotStore, FileFatfSnapshotStore>();
 builder.Services.AddHttpClient<IFatfLlmVerifier, OpenAiFatfLlmVerifier>();
 builder.Services.AddHttpClient<FatfMonitorService>(client =>
 {
-    client.DefaultRequestHeaders.UserAgent.ParseAdd("FatfMonitor/1.0 (+https://github.com/andyheggs/fatf-monitor)");
-    client.DefaultRequestHeaders.Accept.ParseAdd("text/html,application/xhtml+xml");
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; FatfMonitor/1.0; +https://github.com/andyheggs/fatf-monitor)");
+    client.DefaultRequestHeaders.Accept.ParseAdd("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+    client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("en-US,en;q=0.9");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    UseCookies = true,
+    AutomaticDecompression = System.Net.DecompressionMethods.All
 });
 
 var app = builder.Build();

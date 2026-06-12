@@ -31,14 +31,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          increased_url="https://www.fatf-gafi.org/en/publications/High-risk-and-other-monitored-jurisdictions/increased-monitoring-february-2026.html"
-          call_for_action_url="https://www.fatf-gafi.org/en/publications/High-risk-and-other-monitored-jurisdictions/Call-for-action-february-2026.html"
+          home_url="https://www.fatf-gafi.org/"
 
           : > fatf-source-preflight.txt
-          for source_url in "$increased_url" "$call_for_action_url"; do
+          for source_url in "$home_url"; do
             status=$(curl --silent --show-error \
               --location \
-              --user-agent "FatfMonitor/1.0 (+https://github.com/andyheggs/fatf-monitor)" \
+              --user-agent "Mozilla/5.0 (compatible; FatfMonitor/1.0; +https://github.com/andyheggs/fatf-monitor)" \
               --write-out "%{http_code}" \
               --output /dev/null \
               "$source_url" || true)

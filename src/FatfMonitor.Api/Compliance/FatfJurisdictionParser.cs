@@ -13,8 +13,12 @@ public sealed class FatfJurisdictionParser
         "<a\\b[^>]*>(?<text>.*?)</a>",
         RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled);
 
+    private static readonly Regex AnchorWithHrefPattern = new(
+        "<a\\b(?=[^>]*\\bhref\\s*=\\s*[\"'](?<href>[^\"']+)[\"'])[^>]*>(?<text>.*?)</a>",
+        RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled);
+
     private static readonly Regex MarkdownCitationPattern = new(
-        "†(?<text>[^]+)",
+        "\\u2020(?<text>.*?)\\ue201",
         RegexOptions.Compiled);
 
     public IReadOnlyCollection<string> ParseJurisdictionNames(string html)
@@ -30,9 +34,27 @@ public sealed class FatfJurisdictionParser
 
         return names
             .Select(NormalizeName)
-            .Where(name => IsJurisdictionName(name))
+            .Where(IsJurisdictionName)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Order(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    public IReadOnlyCollection<FatfPublicationLink> ExtractPublicationLinks(string html, Uri baseUri)
+    {
+        var cleanHtml = ScriptAndStylePattern.Replace(html, string.Empty);
+        return AnchorWithHrefPattern
+            .Matches(cleanHtml)
+            .Select(match => new
+            {
+                Text = NormalizeName(HtmlToText(match.Groups["text"].Value)),
+                Href = WebUtility.HtmlDecode(match.Groups["href"].Value)
+            })
+            .Select(candidate => TryCreatePublicationLink(candidate.Text, candidate.Href, baseUri))
+            .Where(link => link is not null)
+            .Select(link => link!)
+            .GroupBy(link => $"{link.Category}:{link.Url}", StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
             .ToArray();
     }
 
@@ -47,6 +69,33 @@ public sealed class FatfJurisdictionParser
 
         var length = Math.Min(5000, text.Length - countryIndex);
         return text.Substring(countryIndex, length);
+    }
+
+    private static FatfPublicationLink? TryCreatePublicationLink(string text, string href, Uri baseUri)
+    {
+        if (string.IsNullOrWhiteSpace(text) || string.IsNullOrWhiteSpace(href))
+        {
+            return null;
+        }
+
+        FatfListCategory? category = null;
+        if (text.Contains("Jurisdictions under Increased Monitoring", StringComparison.OrdinalIgnoreCase))
+        {
+            category = FatfListCategory.IncreasedMonitoring;
+        }
+        else if (text.Contains("High-Risk Jurisdictions subject to a Call for Action", StringComparison.OrdinalIgnoreCase))
+        {
+            category = FatfListCategory.CallForAction;
+        }
+
+        if (category is null)
+        {
+            return null;
+        }
+
+        return Uri.TryCreate(baseUri, href, out var url)
+            ? new FatfPublicationLink(category.Value, text, url)
+            : null;
     }
 
     private static string ExtractCountrySegment(string html)

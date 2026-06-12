@@ -7,7 +7,7 @@ The monitor fetches the FATF pages for:
 - Jurisdictions under Increased Monitoring
 - High-Risk Jurisdictions subject to a Call for Action
 
-It extracts the publication-details country lists, optionally asks OpenAI to review the extraction, compares new checks with the previous snapshot, and can run daily through GitHub Actions.
+It discovers the latest FATF jurisdiction publication links from the FATF homepage, extracts the publication-details country lists, optionally asks OpenAI to review the extraction, compares new checks with the previous snapshot, and can run daily through GitHub Actions.
 
 ## Local Run
 

@@ -11,6 +11,11 @@ public sealed record FatfSource(
     string Name,
     Uri Url);
 
+public sealed record FatfPublicationLink(
+    FatfListCategory Category,
+    string Title,
+    Uri Url);
+
 public sealed record FatfJurisdiction(
     string Name,
     FatfListCategory Category,
@@ -44,11 +49,11 @@ public sealed record FatfLlmReview(
 
 public sealed class FatfMonitorOptions
 {
-    public string IncreasedMonitoringUrl { get; set; } =
-        "https://www.fatf-gafi.org/en/publications/High-risk-and-other-monitored-jurisdictions/increased-monitoring-february-2026.html";
+    public string HomePageUrl { get; set; } = "https://www.fatf-gafi.org/";
 
-    public string CallForActionUrl { get; set; } =
-        "https://www.fatf-gafi.org/en/publications/High-risk-and-other-monitored-jurisdictions/Call-for-action-february-2026.html";
+    public string? IncreasedMonitoringUrl { get; set; }
+
+    public string? CallForActionUrl { get; set; }
 
     public string SnapshotPath { get; set; } = Path.Combine("data", "fatf-latest.json");
 

@@ -15,8 +15,9 @@ The monitor fetches the configured FATF source pages, extracts the publication-d
 ## Configuration
 
 ```powershell
-FatfMonitor__IncreasedMonitoringUrl=https://www.fatf-gafi.org/en/publications/High-risk-and-other-monitored-jurisdictions/increased-monitoring-february-2026.html
-FatfMonitor__CallForActionUrl=https://www.fatf-gafi.org/en/publications/High-risk-and-other-monitored-jurisdictions/Call-for-action-february-2026.html
+FatfMonitor__HomePageUrl=https://www.fatf-gafi.org/
+FatfMonitor__IncreasedMonitoringUrl=
+FatfMonitor__CallForActionUrl=
 FatfMonitor__SnapshotPath=data/fatf-latest.json
 FatfMonitor__CheckToken=
 Llm__Provider=OpenAI
