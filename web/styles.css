@@ -157,12 +157,20 @@ input:disabled {
 }
 
 .button-primary {
-  background: #ffffff;
-  color: var(--header);
+  background: #f2b84b;
+  color: #172126;
+  border-color: #f2b84b;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 
 .button-primary:hover {
-  background: #eaf1f2;
+  background: #ffd06f;
+  border-color: #ffd06f;
+}
+
+.button-primary:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 3px;
 }
 
 .button-secondary,
