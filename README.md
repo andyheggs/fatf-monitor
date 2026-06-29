@@ -69,3 +69,15 @@ https://andyheggs.github.io/fatf-monitor/latest.json
 ```
 
 The Pages output is static JSON. Calling it does not call OpenAI and does not use additional OpenAI credits. Credits are only used when the scheduled or manually triggered GitHub Actions workflow refreshes the result.
+
+## Web dashboard
+
+The `web` directory contains a static dashboard for Netlify. It retrieves the published GitHub Pages dataset through the Netlify proxy at `/api/fatf`, then provides:
+
+- Totals for both FATF classifications.
+- Search and classification filters.
+- Links to the official FATF source publications.
+- CSV and JSON downloads.
+- Copy-to-clipboard JSON.
+
+Netlify configuration is defined in `netlify.toml`; no OpenAI key is needed by the dashboard because it reads the latest already-published result.

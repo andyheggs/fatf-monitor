@@ -1,0 +1,21 @@
+[build]
+  publish = "web"
+
+[[redirects]]
+  from = "/api/fatf"
+  to = "https://andyheggs.github.io/fatf-monitor/latest.json"
+  status = 200
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/api/fatf"
+  [headers.values]
+    Cache-Control = "no-store"
