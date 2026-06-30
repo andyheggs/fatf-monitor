@@ -28,6 +28,12 @@ jobs:
       - name: Test API
         run: dotnet test FatfMonitor.slnx --configuration Release
 
+      - name: Fetch previous published dataset
+        run: |
+          curl --silent --show-error --location \
+            --output previous-published.json \
+            https://andyheggs.github.io/fatf-monitor/latest.json || true
+
       - name: Run FATF check from GitHub runner
         env:
           ASPNETCORE_URLS: http://127.0.0.1:5088
@@ -187,9 +193,99 @@ jobs:
           from pathlib import Path
 
           result = json.loads(Path("fatf-result.json").read_text(encoding="utf-8"))
+          baseline = json.loads(
+              Path("config/fatf-baseline-2026-02-13.json").read_text(encoding="utf-8")
+          )
+          calendar = json.loads(
+              Path("config/fatf-publication-calendar.json").read_text(encoding="utf-8")
+          )
           generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
           checked_at = result.get("checkedAt", generated_at)
           dated_name = f"fatf-result-{generated_at[:10]}.json"
+
+          current_date = result["increasedMonitoring"]["publicationDate"]
+          current_snapshot = {
+              "publicationDate": current_date,
+              "increasedMonitoring": result["increasedMonitoring"]["jurisdictions"],
+              "callForAction": result["callForAction"]["jurisdictions"],
+          }
+
+          previous_snapshot = baseline
+          previous_path = Path("previous-published.json")
+          if previous_path.exists():
+              try:
+                  published = json.loads(previous_path.read_text(encoding="utf-8"))
+                  published_date = (
+                      published.get("increasedMonitoring") or {}
+                  ).get("publicationDate")
+                  if published_date and published_date != current_date:
+                      previous_snapshot = {
+                          "publicationDate": published_date,
+                          "increasedMonitoring": (
+                              published.get("increasedMonitoring") or {}
+                          ).get("jurisdictions") or [],
+                          "callForAction": (
+                              published.get("callForAction") or {}
+                          ).get("jurisdictions") or [],
+                      }
+                  else:
+                      stored_previous = (
+                          published.get("publicationComparison") or {}
+                      ).get("previousSnapshot")
+                      if stored_previous:
+                          previous_snapshot = stored_previous
+              except (json.JSONDecodeError, KeyError, TypeError):
+                  pass
+
+          def change_records(category, current_names, previous_names):
+              aliases = {
+                  "lao people's democratic republic": "lao pdr",
+                  "virgin islands (uk)": "british virgin islands",
+              }
+
+              def key(name):
+                  normalized = name.casefold().replace("\u2018", "'").replace("\u2019", "'")
+                  return aliases.get(normalized, normalized)
+
+              previous_lookup = {key(name): name for name in previous_names}
+              current_lookup = {key(name): name for name in current_names}
+              added = [
+                  {"jurisdiction": current_lookup[key], "category": category}
+                  for key in sorted(current_lookup.keys() - previous_lookup.keys())
+              ]
+              removed = [
+                  {"jurisdiction": previous_lookup[key], "category": category}
+                  for key in sorted(previous_lookup.keys() - current_lookup.keys())
+              ]
+              return added, removed
+
+          increased_added, increased_removed = change_records(
+              "Increased monitoring",
+              current_snapshot["increasedMonitoring"],
+              previous_snapshot["increasedMonitoring"],
+          )
+          action_added, action_removed = change_records(
+              "Call for action",
+              current_snapshot["callForAction"],
+              previous_snapshot["callForAction"],
+          )
+          next_publication = next(
+              (
+                  date
+                  for date in calendar["publicationDates"]
+                  if date > current_date
+              ),
+              None,
+          )
+          result["publicationComparison"] = {
+              "previousPublicationDate": previous_snapshot["publicationDate"],
+              "currentPublicationDate": current_date,
+              "nextExpectedPublicationDate": next_publication,
+              "calendarSourceUrl": calendar["sourceUrl"],
+              "added": increased_added + action_added,
+              "removed": increased_removed + action_removed,
+              "previousSnapshot": previous_snapshot,
+          }
 
           Path("pages/latest.json").write_text(
               json.dumps(result, ensure_ascii=True, indent=2) + "\n",

@@ -16,6 +16,15 @@ const elements = {
   actionCount: document.querySelector("#actionCount"),
   freshness: document.querySelector("#freshness"),
   freshnessNote: document.querySelector("#freshnessNote"),
+  publicationConfirmation: document.querySelector("#publicationConfirmation"),
+  priorPublicationDate: document.querySelector("#priorPublicationDate"),
+  currentPublicationDate: document.querySelector("#currentPublicationDate"),
+  nextPublicationDate: document.querySelector("#nextPublicationDate"),
+  addedCount: document.querySelector("#addedCount"),
+  removedCount: document.querySelector("#removedCount"),
+  addedChanges: document.querySelector("#addedChanges"),
+  removedChanges: document.querySelector("#removedChanges"),
+  calendarLink: document.querySelector("#calendarLink"),
   resultSummary: document.querySelector("#resultSummary"),
   jurisdictionRows: document.querySelector("#jurisdictionRows"),
   searchInput: document.querySelector("#searchInput"),
@@ -80,6 +89,59 @@ function freshnessDetails(value) {
     label: days <= 2 ? "Current" : "Review",
     note: `${days} day${days === 1 ? "" : "s"} old`
   };
+}
+
+function formatPublicationDate(value) {
+  if (!value) {
+    return "To be confirmed";
+  }
+
+  const date = new Date(`${value}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) {
+    return "Date unavailable";
+  }
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC"
+  }).format(date);
+}
+
+function renderChangeList(element, changes, emptyMessage) {
+  if (!changes.length) {
+    element.innerHTML = `<li class="no-change">${escapeHtml(emptyMessage)}</li>`;
+    return;
+  }
+
+  element.innerHTML = changes.map((change) => `
+    <li>
+      <strong>${escapeHtml(change.jurisdiction)}</strong>
+      <span>${escapeHtml(change.category)}</span>
+    </li>
+  `).join("");
+}
+
+function renderPublicationComparison(data) {
+  const comparison = data.publicationComparison;
+  if (!comparison) {
+    elements.publicationConfirmation.hidden = true;
+    return;
+  }
+
+  const added = comparison.added || [];
+  const removed = comparison.removed || [];
+  elements.priorPublicationDate.textContent = formatPublicationDate(comparison.previousPublicationDate);
+  elements.currentPublicationDate.textContent = formatPublicationDate(comparison.currentPublicationDate);
+  elements.nextPublicationDate.textContent = formatPublicationDate(comparison.nextExpectedPublicationDate);
+  elements.addedCount.textContent = `${added.length} change${added.length === 1 ? "" : "s"}`;
+  elements.removedCount.textContent = `${removed.length} change${removed.length === 1 ? "" : "s"}`;
+  elements.calendarLink.href = comparison.calendarSourceUrl || elements.calendarLink.href;
+  renderChangeList(elements.addedChanges, added, "No jurisdictions added.");
+  renderChangeList(elements.removedChanges, removed, "No jurisdictions removed.");
+  elements.publicationConfirmation.hidden = false;
+  initializeIcons();
 }
 
 function buildRows(data) {
@@ -182,6 +244,7 @@ function renderData(data) {
 
   renderRows();
   renderSources(data);
+  renderPublicationComparison(data);
 }
 
 function setLoading(isLoading) {

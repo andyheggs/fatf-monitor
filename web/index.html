@@ -70,6 +70,60 @@
       </div>
     </section>
 
+    <section class="publication-confirmation" id="publicationConfirmation" aria-labelledby="confirmationHeading" hidden>
+      <div class="confirmation-heading">
+        <span class="confirmation-icon" aria-hidden="true">
+          <i data-lucide="badge-check"></i>
+        </span>
+        <div>
+          <p class="eyebrow">Publication confirmed</p>
+          <h2 id="confirmationHeading">Current period comparison</h2>
+        </div>
+      </div>
+      <div class="publication-dates">
+        <div>
+          <span>Prior publication</span>
+          <strong id="priorPublicationDate">--</strong>
+        </div>
+        <i data-lucide="arrow-right" aria-hidden="true"></i>
+        <div>
+          <span>Current publication</span>
+          <strong id="currentPublicationDate">--</strong>
+        </div>
+        <i data-lucide="arrow-right" aria-hidden="true"></i>
+        <div>
+          <span>Next expected publication</span>
+          <strong id="nextPublicationDate">--</strong>
+        </div>
+      </div>
+      <div class="period-changes">
+        <div class="change-group">
+          <div class="change-title">
+            <span class="change-indicator added"><i data-lucide="plus" aria-hidden="true"></i></span>
+            <div>
+              <strong>Added this period</strong>
+              <span id="addedCount">0 changes</span>
+            </div>
+          </div>
+          <ul id="addedChanges"></ul>
+        </div>
+        <div class="change-group">
+          <div class="change-title">
+            <span class="change-indicator removed"><i data-lucide="minus" aria-hidden="true"></i></span>
+            <div>
+              <strong>Removed this period</strong>
+              <span id="removedCount">0 changes</span>
+            </div>
+          </div>
+          <ul id="removedChanges"></ul>
+        </div>
+      </div>
+      <a class="calendar-link" id="calendarLink" href="https://www.fatf-gafi.org/en/calendars/events.html" target="_blank" rel="noopener noreferrer">
+        FATF events calendar
+        <i data-lucide="external-link" aria-hidden="true"></i>
+      </a>
+    </section>
+
     <section class="workspace" aria-labelledby="listHeading">
       <div class="workspace-header">
         <div>
