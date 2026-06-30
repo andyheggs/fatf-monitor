@@ -5,7 +5,7 @@ The API monitors the latest FATF publications for:
 - Jurisdictions under Increased Monitoring
 - High-Risk Jurisdictions subject to a Call for Action
 
-The primary retrieval path uses OpenAI hosted web search. The model searches for the latest FATF publications, returns strict JSON containing source URLs and jurisdiction lists, and the API stores/compares that structured result. If OpenAI web search is unavailable or returns invalid JSON, the API falls back to direct FATF homepage discovery and page extraction.
+The primary retrieval path makes one OpenAI hosted web-search request. The model searches for the latest FATF publications and returns strict JSON containing publication dates, source URLs, and both jurisdiction lists. If that result is stale or invalid, the API deterministically parses the current official HM Treasury FATF advisory on GOV.UK before attempting direct FATF homepage discovery.
 
 ## API endpoints
 
@@ -43,6 +43,8 @@ Use the included GitHub Actions workflow to run tests and perform the FATF check
 - `OPENAI_API_KEY`: OpenAI key used for hosted web-search retrieval.
 
 The workflow can also be run manually from the Actions tab. Each run uploads a `fatf-monitor-result` artifact containing the monitor JSON result, a short Markdown summary, source preflight diagnostics, and the API log.
+
+The scheduled workflow runs at `07:15 UTC` each day and makes no more than one OpenAI web-search request. It validates matching publication dates, the expected February/June/October cycle, and minimum list sizes before deployment. The official GOV.UK advisory is used when the search result fails validation. A stale, mismatched, or future-dated result fails the workflow and leaves the last valid Pages dataset in place.
 
 The workflow also publishes static JSON to GitHub Pages:
 

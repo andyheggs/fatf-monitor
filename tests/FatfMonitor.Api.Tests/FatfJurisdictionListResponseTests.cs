@@ -20,11 +20,13 @@ public sealed class FatfJurisdictionListResponseTests
                 new FatfSource(
                     FatfListCategory.IncreasedMonitoring,
                     "Jurisdictions under Increased Monitoring - June 2026",
-                    new Uri("https://example.test/increased")),
+                    new Uri("https://example.test/increased"),
+                    new DateOnly(2026, 6, 19)),
                 new FatfSource(
                     FatfListCategory.CallForAction,
                     "High-Risk Jurisdictions subject to a Call for Action - June 2026",
-                    new Uri("https://example.test/call"))
+                    new Uri("https://example.test/call"),
+                    new DateOnly(2026, 6, 19))
             ],
             null);
 
@@ -34,8 +36,10 @@ public sealed class FatfJurisdictionListResponseTests
         Assert.Equal(2, response.IncreasedMonitoring.Count);
         Assert.Equal(["Algeria", "Angola"], response.IncreasedMonitoring.Jurisdictions);
         Assert.Equal("https://example.test/increased", response.IncreasedMonitoring.SourceUrl);
+        Assert.Equal(new DateOnly(2026, 6, 19), response.IncreasedMonitoring.PublicationDate);
         Assert.Equal(2, response.CallForAction.Count);
         Assert.Equal(["Iran", "Myanmar"], response.CallForAction.Jurisdictions);
         Assert.Equal("https://example.test/call", response.CallForAction.SourceUrl);
+        Assert.Equal(new DateOnly(2026, 6, 19), response.CallForAction.PublicationDate);
     }
 }

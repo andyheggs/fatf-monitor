@@ -80,6 +80,7 @@ jobs:
           python - "$http_status" "$curl_exit" <<'PY'
           import json
           import sys
+          from datetime import date
           from pathlib import Path
 
           http_status = sys.argv[1]
@@ -113,10 +114,33 @@ jobs:
               increased = increased_list.get("jurisdictions") or []
               call_for_action = call_for_action_list.get("jurisdictions") or []
               review = result.get("llmReview") or {}
+
+              today = date.today()
+              if (today.month > 10 or (today.month == 10 and today.day >= 28)):
+                  minimum_date = date(today.year, 10, 1)
+              elif (today.month > 6 or (today.month == 6 and today.day >= 28)):
+                  minimum_date = date(today.year, 6, 1)
+              elif (today.month > 2 or (today.month == 2 and today.day >= 28)):
+                  minimum_date = date(today.year, 2, 1)
+              else:
+                  minimum_date = date(today.year - 1, 10, 1)
+
+              increased_date = date.fromisoformat(increased_list.get("publicationDate", ""))
+              call_for_action_date = date.fromisoformat(call_for_action_list.get("publicationDate", ""))
+              if increased_date != call_for_action_date:
+                  raise SystemExit("FATF publication dates do not match.")
+              if increased_date < minimum_date:
+                  raise SystemExit(
+                      f"Stale FATF publication {increased_date}; expected {minimum_date} or later."
+                  )
+              if increased_date > today:
+                  raise SystemExit(f"FATF publication date {increased_date} is in the future.")
+
               summary.extend([
                   "",
                   "### Extracted lists",
                   "",
+                  f"- Publication date: {increased_date}",
                   f"- Increased monitoring jurisdictions: {len(increased)}",
                   f"- Call for action jurisdictions: {len(call_for_action)}",
                   f"- Total jurisdictions: {result.get('totalJurisdictions')}",

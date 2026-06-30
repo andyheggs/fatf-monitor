@@ -9,7 +9,8 @@ public enum FatfListCategory
 public sealed record FatfSource(
     FatfListCategory Category,
     string Name,
-    Uri Url);
+    Uri Url,
+    DateOnly? PublicationDate = null);
 
 public sealed record FatfPublicationLink(
     FatfListCategory Category,
@@ -62,7 +63,8 @@ public sealed record FatfJurisdictionList(
     FatfListCategory Category,
     string Name,
     string? SourceUrl,
-    IReadOnlyCollection<string> Jurisdictions)
+    IReadOnlyCollection<string> Jurisdictions,
+    DateOnly? PublicationDate = null)
 {
     public int Count => Jurisdictions.Count;
 
@@ -80,7 +82,31 @@ public sealed record FatfJurisdictionList(
             category,
             source?.Name ?? fallbackName,
             source?.Url.ToString(),
-            jurisdictions);
+            jurisdictions,
+            source?.PublicationDate);
+    }
+}
+
+public static class FatfPublicationSchedule
+{
+    public static DateOnly MinimumExpectedPublicationDate(DateOnly today)
+    {
+        if (today.Month > 10 || today.Month == 10 && today.Day >= 28)
+        {
+            return new DateOnly(today.Year, 10, 1);
+        }
+
+        if (today.Month > 6 || today.Month == 6 && today.Day >= 28)
+        {
+            return new DateOnly(today.Year, 6, 1);
+        }
+
+        if (today.Month > 2 || today.Month == 2 && today.Day >= 28)
+        {
+            return new DateOnly(today.Year, 2, 1);
+        }
+
+        return new DateOnly(today.Year - 1, 10, 1);
     }
 }
 
@@ -121,4 +147,5 @@ public sealed class LlmOptions
     public string Model { get; set; } = "gpt-4.1-mini";
     public string SearchModel { get; set; } = "gpt-4.1-mini";
     public string? ApiKey { get; set; }
+    public string GovUkAdvisoryUrl { get; set; } = "https://www.gov.uk/government/publications/money-laundering-advisory-notice-high-risk-third-countries--2/money-laundering-advisory-notice-high-risk-third-countries--2";
 }

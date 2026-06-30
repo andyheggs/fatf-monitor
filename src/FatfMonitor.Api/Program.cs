@@ -13,6 +13,7 @@ builder.Services.Configure<JsonOptions>(options =>
 });
 builder.Services.Configure<FatfMonitorOptions>(builder.Configuration.GetSection("FatfMonitor"));
 builder.Services.AddSingleton<FatfJurisdictionParser>();
+builder.Services.AddSingleton<GovUkFatfAdvisoryParser>();
 builder.Services.AddSingleton<IFatfSnapshotStore, FileFatfSnapshotStore>();
 builder.Services.AddHttpClient<IFatfLlmVerifier, OpenAiFatfLlmVerifier>();
 builder.Services.AddHttpClient<IFatfWebSearchProvider, OpenAiFatfWebSearchProvider>();

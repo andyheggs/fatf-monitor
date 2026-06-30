@@ -7,7 +7,7 @@ The monitor tracks:
 - Jurisdictions under Increased Monitoring
 - High-Risk Jurisdictions subject to a Call for Action
 
-The primary retrieval path uses OpenAI hosted web search to find the latest FATF publications, extract the jurisdiction lists, and return source URLs. If OpenAI web search is unavailable, the API falls back to direct FATF homepage/link discovery with `HttpClient`.
+The primary retrieval path makes one OpenAI hosted web-search request to find the latest FATF publications and extract both jurisdiction lists. Results must pass publication-date, source, and minimum-list-size validation. If OpenAI returns a stale or invalid result, the API deterministically parses the current official HM Treasury FATF advisory on GOV.UK before attempting direct FATF access.
 
 ## Local Run
 
@@ -20,7 +20,7 @@ dotnet test FatfMonitor.slnx
 dotnet run --project src\FatfMonitor.Api\FatfMonitor.Api.csproj
 ```
 
-The OpenAI key is required when running the API from a machine or network that receives `403 Forbidden` from `fatf-gafi.org`. Without it, the API will attempt the direct FATF fallback and return a `503` problem response if FATF blocks the request.
+The OpenAI key enables the primary hosted search. The official GOV.UK fallback does not require a key and avoids the `403 Forbidden` commonly returned by direct requests to `fatf-gafi.org`.
 
 Endpoints:
 
@@ -60,7 +60,16 @@ Endpoints:
 
 ## GitHub Actions
 
-Add `OPENAI_API_KEY` as a repository secret. The workflow runs tests, starts the API on a GitHub-hosted runner, retrieves the latest FATF lists through OpenAI hosted web search, uploads the JSON result as an artifact, and publishes the latest JSON to GitHub Pages.
+Add `OPENAI_API_KEY` as a repository secret. The workflow runs tests, starts the API on a GitHub-hosted runner, retrieves and validates the latest FATF lists, uploads the JSON result as an artifact, and publishes the latest JSON to GitHub Pages.
+
+The workflow runs once daily at `07:15 UTC` and makes one OpenAI web-search request per run. The OpenAI key remains inside GitHub Actions and is never included in GitHub Pages or the Netlify dashboard. Before publishing, both FATF lists must:
+
+- Have the same ISO publication date.
+- Come from either official FATF pages or the official HM Treasury FATF advisory.
+- Belong to the latest expected February, June, or October publication cycle.
+- Not have a future publication date.
+
+If validation fails, the workflow fails closed and does not replace the last successfully published Pages dataset.
 
 After GitHub Pages is enabled for this repository, external apps can read the latest published result from:
 
