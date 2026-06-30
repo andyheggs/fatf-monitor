@@ -379,12 +379,12 @@ h2 {
   color: var(--red);
 }
 
-.change-title strong,
-.change-title span {
+.change-title > div strong,
+.change-title > div span {
   display: block;
 }
 
-.change-title span {
+.change-title > div span {
   color: var(--muted);
   font-size: 12px;
 }
