@@ -1,17 +1,8 @@
 /*
-  X-Frame-Options: ALLOWALL
   Content-Security-Policy: frame-ancestors 'self' https://*.laserfiche.com https://*.laserfiche.ca
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
-
-/
-  X-Frame-Options: ALLOWALL
-  Content-Security-Policy: frame-ancestors 'self' https://*.laserfiche.com https://*.laserfiche.ca
-
-/index.html
-  X-Frame-Options: ALLOWALL
-  Content-Security-Policy: frame-ancestors 'self' https://*.laserfiche.com https://*.laserfiche.ca
 
 /api/fatf
   Cache-Control: no-store
