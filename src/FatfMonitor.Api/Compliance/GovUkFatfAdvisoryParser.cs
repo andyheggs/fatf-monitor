@@ -7,6 +7,9 @@ namespace FatfMonitor.Api.Compliance;
 
 public sealed class GovUkFatfAdvisoryParser
 {
+    private static readonly Uri FatfHighRiskTopicUrl = new(
+        "https://www.fatf-gafi.org/en/topics/high-risk-and-other-monitored-jurisdictions.html");
+
     private static readonly Regex FatfDatePattern = new(
         @"On\s+(?<date>\d{1,2}\s+[A-Za-z]+\s+\d{4}),\s+the\s+FATF\s+published",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -63,18 +66,18 @@ public sealed class GovUkFatfAdvisoryParser
         var increasedSource = new FatfSource(
             FatfListCategory.IncreasedMonitoring,
             $"Jurisdictions under Increased Monitoring - {publicationDate:dd MMMM yyyy}",
-            sourceUrl,
+            FatfHighRiskTopicUrl,
             publicationDate);
         var callForActionSource = new FatfSource(
             FatfListCategory.CallForAction,
             $"High-Risk Jurisdictions subject to a Call for Action - {publicationDate:dd MMMM yyyy}",
-            sourceUrl,
+            FatfHighRiskTopicUrl,
             publicationDate);
 
         var jurisdictions = increased
-            .Select(name => new FatfJurisdiction(name, FatfListCategory.IncreasedMonitoring, sourceUrl.ToString()))
+            .Select(name => new FatfJurisdiction(name, FatfListCategory.IncreasedMonitoring, FatfHighRiskTopicUrl.ToString()))
             .Concat(callForAction.Select(name =>
-                new FatfJurisdiction(name, FatfListCategory.CallForAction, sourceUrl.ToString())))
+                new FatfJurisdiction(name, FatfListCategory.CallForAction, FatfHighRiskTopicUrl.ToString())))
             .OrderBy(jurisdiction => jurisdiction.Category)
             .ThenBy(jurisdiction => jurisdiction.Name, StringComparer.OrdinalIgnoreCase)
             .ToArray();

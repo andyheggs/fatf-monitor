@@ -31,6 +31,12 @@ public sealed class GovUkFatfAdvisoryParserTests
 
         Assert.NotNull(result);
         Assert.All(result.Sources, source => Assert.Equal(new DateOnly(2026, 6, 19), source.PublicationDate));
+        Assert.All(result.Sources, source => Assert.Equal(
+            "https://www.fatf-gafi.org/en/topics/high-risk-and-other-monitored-jurisdictions.html",
+            source.Url.ToString()));
+        Assert.All(result.Jurisdictions, jurisdiction => Assert.Equal(
+            "https://www.fatf-gafi.org/en/topics/high-risk-and-other-monitored-jurisdictions.html",
+            jurisdiction.SourceUrl));
         Assert.Contains(result.Jurisdictions, item => item.Name == "Bosnia and Herzegovina");
         Assert.Contains(result.Jurisdictions, item => item.Name == "Democratic People's Republic of Korea");
         Assert.Equal(3, result.Jurisdictions.Count(item => item.Category == FatfListCategory.CallForAction));
