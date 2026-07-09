@@ -48,7 +48,7 @@
     </section>
 
     <section class="metrics" aria-label="FATF list totals">
-      <div class="metric">
+      <div class="metric metric-total">
         <span class="metric-label">Total jurisdictions</span>
         <strong id="totalCount">--</strong>
         <span class="metric-note">Across both FATF lists</span>
@@ -63,9 +63,9 @@
         <strong id="actionCount">--</strong>
         <span class="metric-note">High-risk jurisdictions</span>
       </div>
-      <div class="metric">
+      <div class="metric metric-freshness">
         <span class="metric-label">Publication freshness</span>
-        <strong class="metric-freshness" id="freshness">--</strong>
+        <strong class="metric-freshness-value" id="freshness">--</strong>
         <span class="metric-note" id="freshnessNote">Awaiting retrieval</span>
       </div>
     </section>
@@ -97,7 +97,7 @@
         </div>
       </div>
       <div class="period-changes">
-        <div class="change-group">
+        <div class="change-group change-group-added">
           <div class="change-title">
             <span class="change-indicator added"><i data-lucide="plus" aria-hidden="true"></i></span>
             <div>
@@ -107,7 +107,7 @@
           </div>
           <ul id="addedChanges"></ul>
         </div>
-        <div class="change-group">
+        <div class="change-group change-group-removed">
           <div class="change-title">
             <span class="change-indicator removed"><i data-lucide="minus" aria-hidden="true"></i></span>
             <div>

@@ -10,8 +10,12 @@
   --header-light: #1d3b42;
   --teal: #087f78;
   --teal-dark: #06645f;
+  --blue: #356b8c;
+  --blue-soft: #edf6fb;
   --amber: #a66105;
   --amber-soft: #fff4dc;
+  --green: #19733a;
+  --green-soft: #eef8f1;
   --red: #a82b35;
   --red-soft: #fdecef;
   --shadow: 0 10px 26px rgba(20, 44, 50, 0.08);
@@ -355,6 +359,22 @@ h2 {
   gap: 28px;
 }
 
+.change-group {
+  padding: 16px 16px 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+}
+
+.change-group-added {
+  background: linear-gradient(180deg, var(--green-soft), #ffffff 72%);
+  border-color: #c9e9d2;
+}
+
+.change-group-removed {
+  background: linear-gradient(180deg, var(--red-soft), #ffffff 72%);
+  border-color: #f3cbd1;
+}
+
 .change-indicator {
   width: 28px;
   height: 28px;
@@ -370,8 +390,8 @@ h2 {
 }
 
 .change-indicator.added {
-  background: #e4f4e9;
-  color: #19733a;
+  background: #d9f0e0;
+  color: var(--green);
 }
 
 .change-indicator.removed {
@@ -438,6 +458,7 @@ h2 {
   padding: 22px;
   border-right: 1px solid var(--line-soft);
   position: relative;
+  background: #ffffff;
 }
 
 .metric:last-child {
@@ -452,12 +473,36 @@ h2 {
   background: #8da0a4;
 }
 
+.metric-total {
+  background: linear-gradient(135deg, var(--blue-soft), #ffffff 72%);
+}
+
+.metric-total::before {
+  background: var(--blue);
+}
+
+.metric-increased {
+  background: linear-gradient(135deg, var(--amber-soft), #ffffff 72%);
+}
+
 .metric-increased::before {
   background: var(--amber);
 }
 
+.metric-action {
+  background: linear-gradient(135deg, var(--red-soft), #ffffff 72%);
+}
+
 .metric-action::before {
   background: var(--red);
+}
+
+.metric-freshness {
+  background: linear-gradient(135deg, #e7f6f3, #ffffff 72%);
+}
+
+.metric-freshness::before {
+  background: var(--teal);
 }
 
 .metric-label,
@@ -478,7 +523,7 @@ h2 {
   line-height: 1;
 }
 
-.metric strong.metric-freshness {
+.metric strong.metric-freshness-value {
   padding-top: 5px;
   font-size: 20px;
 }
